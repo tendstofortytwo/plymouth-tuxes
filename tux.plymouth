@@ -1,0 +1,13 @@
+[Plymouth Theme]
+Name=Tuxes
+Description=Tuxes
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/tux
+ScriptFile=/usr/share/plymouth/themes/tux/tux.script
+ConsoleLogBackgroundColor=0x00000000
+MonospaceFont=ter-118n
+
+[script-env-vars]
+example_env_var=example env var value

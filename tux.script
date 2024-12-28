@@ -1,0 +1,138 @@
+tux.count = 8;
+tux.width = 75;
+tux.height = 90;
+tux.image = Image("tux.png");
+tux.image = tux.image.Scale(tux.width, tux.height);
+
+for(i = 0; i < tux.count; i++) {
+	tux.sprites[i] = Sprite(tux.image);
+	tux.sprites[i].SetX(i * tux.width);
+	tux.sprites[i].SetY(0);
+}
+
+#----------------------------------------- Dialogue --------------------------------
+
+status = "normal";
+
+fun dialog_setup()
+  {
+    local.box;
+    local.lock;
+    local.entry;
+    
+    box.image = Image("box.png");
+    lock.image = Image("lock.png");
+    entry.image = Image("entry.png");
+    
+    box.sprite = Sprite(box.image);
+    box.x = Window.GetX() + Window.GetWidth()  / 2 - box.image.GetWidth ()/2;
+    box.y = Window.GetY() + Window.GetHeight() / 2 - box.image.GetHeight()/2;
+    box.z = 10000;
+    box.sprite.SetPosition(box.x, box.y, box.z);
+    
+    lock.sprite = Sprite(lock.image);
+    lock.x = box.x + box.image.GetWidth()/2 - (lock.image.GetWidth() + entry.image.GetWidth()) / 2;
+    lock.y = box.y + box.image.GetHeight()/2 - lock.image.GetHeight()/2;
+    lock.z = box.z + 1;
+    lock.sprite.SetPosition(lock.x, lock.y, lock.z);
+    
+    entry.sprite = Sprite(entry.image);
+    entry.x = lock.x + lock.image.GetWidth();
+    entry.y = box.y + box.image.GetHeight()/2 - entry.image.GetHeight()/2;
+    entry.z = box.z + 1;
+    entry.sprite.SetPosition(entry.x, entry.y, entry.z);
+    
+    global.dialog.box = box;
+    global.dialog.lock = lock;
+    global.dialog.entry = entry;
+    global.dialog.bullet_image = Image("bullet.png");
+    dialog_opacity (1);
+  }
+    
+fun dialog_opacity(opacity)
+  {
+    dialog.box.sprite.SetOpacity (opacity);
+    dialog.lock.sprite.SetOpacity (opacity);
+    dialog.entry.sprite.SetOpacity (opacity);
+    for (index = 0; dialog.bullet[index]; index++)
+      {
+        dialog.bullet[index].sprite.SetOpacity(opacity);
+      }
+  }
+
+fun display_normal_callback ()
+  {
+    global.status = "normal";
+    if (global.dialog)
+      dialog_opacity (0);
+  }
+
+fun display_password_callback (prompt, bullets)
+  {
+    global.status = "password";
+    if (!global.dialog)
+	dialog_setup();
+    else
+	dialog_opacity(1);
+    for (index = 0; dialog.bullet[index] || index < bullets; index++)
+      {
+        if (!dialog.bullet[index])
+          {
+            dialog.bullet[index].sprite = Sprite(dialog.bullet_image);
+            dialog.bullet[index].x = dialog.entry.x + index * dialog.bullet_image.GetWidth();
+            dialog.bullet[index].y = dialog.entry.y + dialog.entry.image.GetHeight() / 2 - dialog.bullet_image.GetHeight() / 2;
+            dialog.bullet[index].z = dialog.entry.z + 1;
+            dialog.bullet[index].sprite.SetPosition(dialog.bullet[index].x, dialog.bullet[index].y, dialog.bullet[index].z);
+          }
+        if (index < bullets)
+          dialog.bullet[index].sprite.SetOpacity(1);
+        else
+          dialog.bullet[index].sprite.SetOpacity(0);
+      }
+  }
+
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+
+#----------------------------------------- Message --------------------------------
+
+font = "Mono 13";
+
+test_image = Image.Text("A", 1, 1, 1, 1, font);
+text_height = test_image.GetHeight();
+row_count = Math.Int(Window.GetWidth() / test_image.GetWidth());
+
+lines_idx = 0;
+for(y = tux.height; y+text_height < Window.GetHeight(); y += text_height) {
+	lines[lines_idx] = Sprite();
+	lines[lines_idx].SetX(0);
+	lines[lines_idx].SetY(y);
+	lines_idx++;
+}
+
+messages_idx = 0;
+
+fun announce(text) {
+	if(messages_idx < lines_idx) {
+		lines[messages_idx].SetImage(Image.Text(text, 1, 1, 1, 1, font));
+	}
+	else {
+		for(i = 0; i < lines_idx-1; i++) {
+			lines[i].SetImage(lines[i+1].GetImage());
+		}
+		lines[lines_idx-1].SetImage(Image.Text(text, 1, 1, 1, 1, font));
+	}
+	messages_idx++;
+}
+
+fun display_message_callback(text) {
+	while(text.Length() > row_count) {
+		first = text.SubString(0, row_count);
+		text = text.SubString(row_count, text.Length());
+		announce(first);
+	}
+	announce(text);
+}
+
+Plymouth.SetDisplayMessageFunction(display_message_callback);
+Plymouth.SetUpdateStatusFunction(display_message_callback);
